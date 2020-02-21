@@ -1,0 +1,7 @@
+NetfilterQueue==0.8.1
+queuelib==1.5.0
+requests==2.22.0
+scapy==2.4.3
+zenmap==7.60
+pyfiglet==0.7
+PrettyTable==0.7.2
