@@ -16,8 +16,6 @@ def start_text():
 
 start_text()
 
-event = False
-
 class Mac_change:
     def __init__(self,id ,name, info):
         self.id = id
