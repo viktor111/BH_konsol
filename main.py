@@ -3,6 +3,8 @@ import pyfiglet
 import http as server
 import subprocess
 import sys
+
+from mac_vendor_lookup import MacLookup
 from prettytable import PrettyTable
 
 def start_text():
@@ -22,23 +24,33 @@ class Mac_change:
         self.name = name
         self.info = info
     def change_mac(self, interface, new_mac):
-        print(f'[+] Changing MAC address to {new_mac}!')
+        print(f'[+] Tool started!')
 
         commands_1 = ['ifconfig', interface, 'down']
-        commands_2 = ['ifconfig', 'hw', 'ether', new_mac]
+        commands_2 = ['ifconfig',  interface, 'hw', 'ether', new_mac]
         commands_3 = ['ifconfig', interface, 'up']
 
         subprocess.call(commands_1)
+        print(f'[+] Interface {interface} down')
         subprocess.call(commands_2)
+        print(f'[+] Changing MAC address to new one')
         subprocess.call(commands_3)
+        print(f'[+] MAC address changed to {new_mac}.')
 
 class Net_detect:
     def __init__(self,id ,name, info):
         self.id = id
         self.name =  name
         self.info = info
-    #ToDo method to for detect devices in network
-#method to set all the tools
+    def detect(self, ip):
+        arp_request = scapy.ARP(pdst=ip)
+        broadcats = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
+        arp_request_broadcast = broadcats/arp_request
+        answered = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
+
+        mac_table = PrettyTable(['IP', 'MAC address', 'Vendor'])
+        for el in answered:
+            mac_table.add_row([el[1].prsc, el[1].hwsrc, MacLookup.lookup(el[1].hwsrc)])
 def set_tools():
     info_mac_change = 'Changes your MAC address\n options are interface and new_mac.'
     info_net_detect = 'Detects all devices in the network\n options are yourIP/24'
@@ -60,6 +72,7 @@ def display_commands():
     help_table.add_row(['help', 'Lists commands', 'help'])
     help_table.add_row(['run', 'Run a tool by selecting a number', 'run 0'])
     help_table.add_row(['info', 'Information about paricular tool', 'info 0'])
+    help_table.add_row(['bye', 'Exit the programm', 'bye'])
     print(help_table)
 
 def display_help():
@@ -67,43 +80,56 @@ def display_help():
     print('This is all in one tool made by zvado.')
     print('This tool is made for balack hat hackers but if anyone can use it as well.')
 
+def exit():
+    print('\n bye :p')
+    sys.exit()
 
-def run_tool(tool_num):
-    print(tool_num)
+def options_list(list_command):
+    options = []
+    for index in range(2, len(list_command)):
+       command = list_command[index]
+       options.append(command)
+    return options
 
-    set_tools()[0].change_mac('enp3s0', '70:85:c2:06:ea:c4')
-    # ToDo run a tool class method based on tool number
+def event_builder(command):
+    event = []
+    try:
+        list_command = command.split()
+        tool_number = list_command[1]
+        options = options_list(list_command)
+        event.append(tool_number)
+        event.append(options)
+    except IndexError:
+        print('[-] Input tool number.')
+        read_command()
+
+    return event
 
 
+def run_tool(event):
+    print(event)
+
+    #set_tools()[0].change_mac('enp3s0', '70:85:c2:06:ea:c4')
 def read_command():
-    #set the tools before reading command
     set_tools()
-    tool_num = 0
-
-    command = input('->> ')
+    try:
+        command_input = input('->> ')
+    except KeyboardInterrupt:
+        exit()
     #check what is the command
-    if command == 'show':
+    if command_input == 'show':
         display_tools()
-    if command == 'help':
+    if command_input == 'help':
         display_help()
-    if command == 'commands':
+    if command_input == 'commands':
         display_commands()
-    if 'run'in command:
-        try:
-            list_command = command.split()
-            tool_num = list_command[1]
-        except IndexError:
-            print('[-] Please select tool number.')
-            return read_command()
-        run_tool(tool_num)
+    if command_input == 'bye':
+        exit()
+    if 'run'in command_input:
+        event = event_builder(command_input)
+        run_tool(event)
 
 while True:
     read_command()
-
-
-
-
-
-
 
 
