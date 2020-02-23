@@ -21,8 +21,15 @@ class Mac_change:
         self.id = id
         self.name = name
         self.info = info
-    def change_mac(self, interface, new_mac):
+    def _method_(self, *args):
         print(f'[+] Tool started!')
+
+        try:
+            options = args[0]
+            interface = options[0]
+            new_mac = options[1]
+        except IndexError:
+            print('[-] Check if options are correct. [interface new_mac]')
 
         commands_1 = ['ifconfig', interface, 'down']
         commands_2 = ['ifconfig',  interface, 'hw', 'ether', new_mac]
@@ -40,15 +47,29 @@ class Net_detect:
         self.id = id
         self.name =  name
         self.info = info
-    def detect(self, ip):
-        arp_request = scapy.ARP(pdst=ip)
-        broadcats = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
-        arp_request_broadcast = broadcats/arp_request
-        answered = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
+    def _method_(self, *args):
 
-        mac_table = PrettyTable(['IP', 'MAC address', 'Vendor'])
+        try:
+            options = args[0]
+            ip = options[0]
+        except IndexError:
+            print('[-] Check if options are correct. [ip/24]')
+
+        arpRequest = scapy.ARP(pdst=ip)
+        broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+        arpRequestBroadcast = broadcast/arpRequest
+        answered = scapy.srp(arpRequestBroadcast, timeout=1, verbose=False)[0]
+
+        print("IP\t\t\tMAC Address\t\t\tVendor\n-----------------------------------------------------------")
         for el in answered:
-            mac_table.add_row([el[1].prsc, el[1].hwsrc, MacLookup.lookup(el[1].hwsrc)])
+            print(el[1].psrc + "\t\t" + el[1].hwsrc + "\t\t" + MacLookup().lookup(el[1].hwsrc))
+
+
+
+
+#        mac_table = PrettyTable(['IP', 'MAC address', 'Vendor'])
+#        for el in answered:
+#           mac_table.add_row([el[1].prsc, el[1].hwsrc, MacLookup.lookup(el[1].hwsrc)])
 
 def set_tools():
     info_mac_change = 'Changes your MAC address\n options are interface and new_mac.'
@@ -105,17 +126,24 @@ def event_builder(command):
     return event
 
 
-def run_tool(event):
+def event_parser(event):
     try:
         options = event[1]
         tool = int(event[0])
-        print(options)
-        print(set_tools()[tool])
-        #read_command()
+        print(f'Options: {options}')
+        print(f'Tool Name: {set_tools()[tool].name}')
+
     except IndexError:
         print('[-] The tool number dosent exist')
 
-#    set_tools()[0].change_mac('enp3s0', '70:85:c2:06:ea:c4')
+    return [tool, options]
+
+def run_tools(parsed_event):
+    tool = parsed_event[0]
+    options = parsed_event[1]
+
+    set_tools()[tool]._method_(options)
+
 
 def read_command():
     set_tools()
@@ -134,7 +162,8 @@ def read_command():
         exit()
     if 'run'in command_input:
         event = event_builder(command_input)
-        run_tool(event)
+        parsed_event = event_parser(event)
+        run_tools(parsed_event)
 
 while True:
     read_command()
