@@ -49,6 +49,7 @@ class Net_detect:
         mac_table = PrettyTable(['IP', 'MAC address', 'Vendor'])
         for el in answered:
             mac_table.add_row([el[1].prsc, el[1].hwsrc, MacLookup.lookup(el[1].hwsrc)])
+
 def set_tools():
     info_mac_change = 'Changes your MAC address\n options are interface and new_mac.'
     info_net_detect = 'Detects all devices in the network\n options are yourIP/24'
@@ -105,9 +106,17 @@ def event_builder(command):
 
 
 def run_tool(event):
-    print(event)
+    try:
+        options = event[1]
+        tool = int(event[0])
+        print(options)
+        print(set_tools()[tool])
+        #read_command()
+    except IndexError:
+        print('[-] The tool number dosent exist')
 
-    #set_tools()[0].change_mac('enp3s0', '70:85:c2:06:ea:c4')
+#    set_tools()[0].change_mac('enp3s0', '70:85:c2:06:ea:c4')
+
 def read_command():
     set_tools()
     try:
