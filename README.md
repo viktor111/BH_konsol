@@ -1,6 +1,6 @@
 # BH_konsol
 
-BH_konsol stands for black hat konsol. Its all in one tool made for ethical hacking and pen testing.  
+BH_konsol (black hat konsol) Its all in one tool made for ethical hacking and pen testing.  
 
 ## Tools
  
