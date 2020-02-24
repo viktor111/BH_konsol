@@ -229,6 +229,17 @@ def display_tools():
         print(f'{tool.id} - {tool.name}')
     event = True
 
+def display_info(command_input):
+
+    try:
+        split_command = command_input.split()
+        tool_number = int(split_command[1])
+        print(set_tools()[tool_number].info)
+    except IndexError:
+        print('[-] Check if you inputed tool number to read info')
+        read_command()
+
+
 def display_commands():
     help_table = PrettyTable(['Commands', 'Actions', 'Example'])
     help_table.add_row(['show', 'Lists all tools', 'show'])
@@ -307,6 +318,8 @@ def read_command():
         event = event_builder(command_input)
         parsed_event = event_parser(event)
         run_tools(parsed_event)
+    if 'info' in command_input:
+        display_info(command_input)
 
 while True:
     read_command()
