@@ -1,6 +1,6 @@
 # BH_konsol
 
-BH_konsol stands for black hat konsol. Its all in one tool made for ethical hacking and pen testing.  
+BH_konsol (black hat konsol) Its all in one tool made for ethical hacking and pen testing.  
 
 ## Tools
  
@@ -37,7 +37,7 @@ Usage is ver simple.
 cd in the BH_konsol dir
 
 run the main.py
-(dont forget the sudo or some tools will nto work)
+(dont forget the sudo or some tools will not work)
 ```
 sudo python3 main.py
 ```
