@@ -252,7 +252,7 @@ def display_commands():
 def display_help():
     print('To use the tool list all commands type commands')
     print('This is all in one tool made by zvado.')
-    print('This tool is made for balack hat hackers but if anyone can use it as well.')
+    print('This tool is made so people can learn hacking and pen testing.')
 
 def exit():
     print('\n bye :p')
